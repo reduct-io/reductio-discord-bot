@@ -6,7 +6,8 @@ import {
   GuildSystemChannelFlags,
   TextChannel,
 } from "discord.js";
-import { embedColors, Status } from "../../embedColors";
+import { colorsEmbed, Status } from "../../embedColors.js";
+import { bot } from "../../main.js";
 
 @Discord()
 // @SlashGroup({ description: "Debug commands for server upkeep", name: "debug" })
@@ -24,13 +25,13 @@ export class Clear {
     interaction: CommandInteraction
   ) {
     const channel = interaction.channel as TextChannel;
+    const auditLog = bot.channels.resolve("1036112551408308286") as TextChannel;
     if (ammount > 100) {
-      const errorEmbed = new EmbedBuilder()
+      const errorEmbed = colorsEmbed(Status.Error)
         .setTitle("Message limit exceeded")
         .setDescription(
           `You can only delete up to 100 messages at a time \n (attempted to delete ${ammount} messages)`
-        )
-        .setColor("#d41e0d");
+        );
 
       await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
     } else {
@@ -38,14 +39,17 @@ export class Clear {
         limit: ammount,
       });
       await channel.bulkDelete(messagesToDelete);
-      const successEmbed = new EmbedBuilder()
+      const successEmbed = colorsEmbed(Status.Success)
         .setTitle("Messages deleted")
+        .setFooter({
+          text: `Command executed by ${interaction.user.tag}`,
+          iconURL: interaction.user.displayAvatarURL(),
+        })
         .setDescription(
           `Successfully deleted ${ammount} messages from ${channel.name}`
-        )
-        .setColor("#2fc53b");
-
+        );
       await interaction.reply({ embeds: [successEmbed], ephemeral: true });
+      await auditLog.send({ embeds: [successEmbed] });
     }
   }
 }
